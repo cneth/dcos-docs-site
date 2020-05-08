@@ -1,41 +1,41 @@
 // Packages
-const fs = require('fs');
-const minimatch = require('minimatch');
-const Metalsmith = require('metalsmith');
-const markdown = require('metalsmith-markdownit');
-const layouts = require('metalsmith-layouts');
-const permalinks = require('metalsmith-permalinks');
-const assets = require('metalsmith-assets');
-const dataLoader = require('metalsmith-data-loader');
-const watch = require('metalsmith-watch');
-const branch = require('metalsmith-branch')
-const serve = require('metalsmith-serve');
-const redirect = require('metalsmith-redirect');
-const webpack = require('metalsmith-webpack2');
-const anchor = require('markdown-it-anchor');
-const attrs = require('markdown-it-attrs');
-const timer = require('metalsmith-timer');
-const ignore = require('metalsmith-ignore');
-const copy = require('metalsmith-copy');
+const fs = require("fs");
+const minimatch = require("minimatch");
+const Metalsmith = require("metalsmith");
+const markdown = require("metalsmith-markdownit");
+const layouts = require("metalsmith-layouts");
+const permalinks = require("metalsmith-permalinks");
+const assets = require("metalsmith-assets");
+const dataLoader = require("metalsmith-data-loader");
+const watch = require("metalsmith-watch");
+const branch = require("metalsmith-branch");
+const serve = require("metalsmith-serve");
+const redirect = require("metalsmith-redirect");
+const webpack = require("metalsmith-webpack2");
+const anchor = require("markdown-it-anchor");
+const attrs = require("markdown-it-attrs");
+const timer = require("metalsmith-timer");
+const ignore = require("metalsmith-ignore");
+const copy = require("metalsmith-copy");
 
 // Local Plugins
-const hierarchy = require('./plugins/metalsmith-hierarchy');
-const hierarchyRss = require('./plugins/metalsmith-hierarchy-rss');
-const headings = require('./plugins/metalsmith-headings');
-const algolia = require('./plugins/metalsmith-algolia');
-const inPlace = require('./plugins/metalsmith-in-place-dcos');
-const includeContent = require('./plugins/metalsmith-include-content-dcos');
-const revision = require('./plugins/metalsmith-revision');
-const shortcodes = require('./plugins/metalsmith-shortcodes');
-const wkhtmltopdfLinkResolver = require('./plugins/metalsmith-wkhtmltopdf-link-resolver');
+const hierarchy = require("./plugins/metalsmith-hierarchy");
+const hierarchyRss = require("./plugins/metalsmith-hierarchy-rss");
+const headings = require("./plugins/metalsmith-headings");
+const algolia = require("./plugins/metalsmith-algolia");
+const inPlace = require("./plugins/metalsmith-in-place-dcos");
+const includeContent = require("./plugins/metalsmith-include-content-dcos");
+const revision = require("./plugins/metalsmith-revision");
+const shortcodes = require("./plugins/metalsmith-shortcodes");
+const wkhtmltopdfLinkResolver = require("./plugins/metalsmith-wkhtmltopdf-link-resolver");
 
 // Configs
-const configData = fs.readFileSync('config.json');
+const configData = fs.readFileSync("config.json");
 const config = JSON.parse(configData);
-const shortcodesConfig = require('./shortcodes');
+const shortcodesConfig = require("./shortcodes");
 
 function splitCommasOrEmptyArray(val) {
-    return (val && val.length > 0) ? val.split(',') : [];
+  return val && val.length > 0 ? val.split(",") : [];
 }
 
 // Environment Variables
@@ -47,50 +47,46 @@ const ALGOLIA_PRIVATE_KEY = process.env.ALGOLIA_PRIVATE_KEY;
 const ALGOLIA_INDEX = process.env.ALGOLIA_INDEX;
 const RENDER_PATH_PATTERN = process.env.RENDER_PATH_PATTERN || process.env.RPP;
 
-const branchDoNotIndex = config[GIT_BRANCH] ? (
-    config[GIT_BRANCH].DO_NOT_INDEX
-) : (
-    []
-);
+const branchDoNotIndex = config[GIT_BRANCH]
+  ? config[GIT_BRANCH].DO_NOT_INDEX
+  : [];
 
-const ALGOLIA_SKIP_SECTIONS = branchDoNotIndex ? (
-    config.always.DO_NOT_INDEX.concat(branchDoNotIndex)
-) : (
-    config.always.DO_NOT_INDEX
-);
+const ALGOLIA_SKIP_SECTIONS = branchDoNotIndex
+  ? config.always.DO_NOT_INDEX.concat(branchDoNotIndex)
+  : config.always.DO_NOT_INDEX;
 
-const branchDoNotBuild = config[GIT_BRANCH] ? (
-    config[GIT_BRANCH].DO_NOT_BUILD
-) : (
-    config.local.DO_NOT_BUILD
-);
+const branchDoNotBuild = config[GIT_BRANCH]
+  ? config[GIT_BRANCH].DO_NOT_BUILD
+  : config.local.DO_NOT_BUILD;
 
-const METALSMITH_SKIP_SECTIONS = config.always.DO_NOT_BUILD.concat(branchDoNotBuild);
+const METALSMITH_SKIP_SECTIONS = config.always.DO_NOT_BUILD.concat(
+  branchDoNotBuild
+);
 
 //
 // Errors
 //
 
-if (!GIT_BRANCH && process.env.NODE_ENV !== 'development') {
-    throw new Error('Env var GIT_BRANCH has not been set.');
+if (!GIT_BRANCH && process.env.NODE_ENV !== "development") {
+  throw new Error("Env var GIT_BRANCH has not been set.");
 }
 
-if (ALGOLIA_UPDATE === 'true') {
-    if (process.env.NODE_ENV === 'pdf') {
-        throw new Error('Algolia env vars set while build env is pdf');
-    }
-    if (!ALGOLIA_PROJECT_ID) {
-        throw new Error('Env var ALGOLIA_PROJECT_ID has not been set.');
-    }
-    if (!ALGOLIA_PUBLIC_KEY) {
-        throw new Error('Env var ALGOLIA_PUBLIC_KEY has not been set.');
-    }
-    if (!ALGOLIA_PRIVATE_KEY) {
-        throw new Error('Env var ALGOLIA_PRIVATE_KEY has not been set.');
-    }
-    if (!ALGOLIA_INDEX) {
-        throw new Error('Env var ALGOLIA_INDEX has not been set.');
-    }
+if (ALGOLIA_UPDATE === "true") {
+  if (process.env.NODE_ENV === "pdf") {
+    throw new Error("Algolia env vars set while build env is pdf");
+  }
+  if (!ALGOLIA_PROJECT_ID) {
+    throw new Error("Env var ALGOLIA_PROJECT_ID has not been set.");
+  }
+  if (!ALGOLIA_PUBLIC_KEY) {
+    throw new Error("Env var ALGOLIA_PUBLIC_KEY has not been set.");
+  }
+  if (!ALGOLIA_PRIVATE_KEY) {
+    throw new Error("Env var ALGOLIA_PRIVATE_KEY has not been set.");
+  }
+  if (!ALGOLIA_INDEX) {
+    throw new Error("Env var ALGOLIA_INDEX has not been set.");
+  }
 }
 
 //
@@ -99,32 +95,33 @@ if (ALGOLIA_UPDATE === 'true') {
 
 const MS = Metalsmith(__dirname);
 
-const currentYear = (new Date()).getFullYear();
+const currentYear = new Date().getFullYear();
 
 // Metadata
 // These are available in the layouts as js variables
 MS.metadata({
-    url: 'https://docs.d2iq.com',
-    siteTitle: 'D2iQ Docs',
-    siteDescription: 'Welcome to the documentation pages for D2iQ. Visit one of the product ' +
-        'pages to get started.',
-    copyright: `&copy; ${currentYear} D2iQ, Inc. All rights reserved.`,
-    env: process.env.NODE_ENV,
-    gitBranch: GIT_BRANCH,
-    dcosDocsLatest: '2.0',
-    dcosCNDocsLatest: '2.0',
-    konvoyDocsLatest: '1.4',
-    kommanderDocsLatest: '1.0',
-    dispatchDocsLatest: '1.1',
+  url: "https://docs.d2iq.com",
+  siteTitle: "D2iQ Docs",
+  siteDescription:
+    "Welcome to the documentation pages for D2iQ. Visit one of the product " +
+    "pages to get started.",
+  copyright: `&copy; ${currentYear} D2iQ, Inc. All rights reserved.`,
+  env: process.env.NODE_ENV,
+  gitBranch: GIT_BRANCH,
+  dcosDocsLatest: "2.0",
+  dcosCNDocsLatest: "2.0",
+  konvoyDocsLatest: "1.4",
+  kommanderDocsLatest: "1.0",
+  dispatchDocsLatest: "1.1",
 });
 
 // Source
 // Where metalsmith looks for all files
-MS.source('./pages');
+MS.source("./pages");
 
 // Destination
 // Where metalsmith will put the output code
-MS.destination('./build');
+MS.destination("./build");
 
 // Don't Clean
 // Cleaning removes the destination directory before writing to it
@@ -138,8 +135,7 @@ MS.clean(false);
 const CB = branch();
 
 // Start timer
-CB.use(timer('CB: Init'));
-
+CB.use(timer("CB: Init"));
 
 const neededToBuildMainMenu = [
   "index.md",
@@ -153,32 +149,35 @@ const neededToBuildMainMenu = [
   `ksphere/konvoy/${MS._metadata.konvoyDocsLatest}/index.md`,
   "ksphere/kommander/index.md",
   `ksphere/kommander/${MS._metadata.kommanderDocsLatest}/index.md`,
-]
-if (process.env.NODE_ENV === 'development' && RENDER_PATH_PATTERN) {
+];
+if (process.env.NODE_ENV === "development" && RENDER_PATH_PATTERN) {
   CB.use((files, _, done) => {
-    Object
-      .keys(files)
-      .filter(file =>
-        file.match(/\.md$/)
-          && !neededToBuildMainMenu.includes(file)
-          &&!minimatch(file, RENDER_PATH_PATTERN))
-      .forEach(file => {
+    Object.keys(files)
+      .filter(
+        (file) =>
+          file.match(/\.md$/) &&
+          !neededToBuildMainMenu.includes(file) &&
+          !minimatch(file, RENDER_PATH_PATTERN)
+      )
+      .forEach((file) => {
         // remove all md-files outside the rendering-path to save a lot of compilation later on
         delete files[file];
       });
     done();
-  })
+  });
 }
 
 CB.use(ignore(METALSMITH_SKIP_SECTIONS));
-CB.use(timer('CB: Ignore'));
+CB.use(timer("CB: Ignore"));
 
-CB.use(copy({
-    pattern: '**/README.md',
-    transform: file => file.replace(/README/, 'index'),
+CB.use(
+  copy({
+    pattern: "**/README.md",
+    transform: (file) => file.replace(/README/, "index"),
     move: true,
-}));
-CB.use(timer('CB: Copy'));
+  })
+);
+CB.use(timer("CB: Copy"));
 
 // Load model data from external .json/.yaml files
 // For example (in your Front Matter):
@@ -187,111 +186,127 @@ CB.use(timer('CB: Copy'));
 //   model:
 //   data1: path/to/my.json (access content in my.json as model.data1.foo.bar)
 //   data2: path/to/my.yml (access content in my.yml as model.data2.foo.bar)
-CB.use(dataLoader({
-    dataProperty: 'model',
-    match: '**/*.md',
-}));
-CB.use(timer('CB: Dataloader'));
+CB.use(
+  dataLoader({
+    dataProperty: "model",
+    match: "**/*.md",
+  })
+);
+CB.use(timer("CB: Dataloader"));
 
 // Load raw content via '#include' directives before rendering any mustache or markdown.
 // For example (in your content):
 //   #include path/to/file.tmpl
-CB.use(includeContent({
+CB.use(
+  includeContent({
     // Style as a C-like include statement. Must be on its own line.
-    pattern: '^#include ([^ \n]+)$',
-    match: '**/*.md*',
-}));
-CB.use(timer('CB: IncludeContent'));
+    pattern: "^#include ([^ \n]+)$",
+    match: "**/*.md*",
+  })
+);
+CB.use(timer("CB: IncludeContent"));
 
 // Process any mustache templating in files.
 // For example (in your Front Matter):
 //   render: mustache
-CB.use(inPlace({
-    renderProperty: 'render',
-    match: '**/*.md',
-}));
-CB.use(timer('CB: Mustache'));
+CB.use(
+  inPlace({
+    renderProperty: "render",
+    match: "**/*.md",
+  })
+);
+CB.use(timer("CB: Mustache"));
 
 // Folder Hierarchy
-CB.use(hierarchy({
-    files: ['.md'],
+CB.use(
+  hierarchy({
+    files: [".md"],
     excerpt: true,
-}));
-CB.use(timer('CB: Hierarchy'));
+  })
+);
+CB.use(timer("CB: Hierarchy"));
 
 // RSS Feed
-CB.use(hierarchyRss({
+CB.use(
+  hierarchyRss({
     itemOptionsMap: {
-        title: 'title',
-        description: 'excerpt',
+      title: "title",
+      description: "excerpt",
     },
-}));
-CB.use(timer('CB: Hierarchy RSS'));
-
+  })
+);
+CB.use(timer("CB: Hierarchy RSS"));
 
 //
 // Slow Plugins
 //
 
 // Shortcodes
-CB.use(shortcodes({
-    files: ['.md'],
+CB.use(
+  shortcodes({
+    files: [".md"],
     shortcodes: shortcodesConfig,
-}));
-CB.use(timer('CB: Shortcodes'));
+  })
+);
+CB.use(timer("CB: Shortcodes"));
 
 // Don't rebuild files that have not been touched
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV === "development") {
   CB.use(revision);
-  CB.use(timer('CB: Revision'));
+  CB.use(timer("CB: Revision"));
 }
 
 // Markdown
-CB.use(markdown({
-        smartList: false,
-        typographer: true,
-        html: true,
-    })
+CB.use(
+  markdown({
+    smartList: false,
+    typographer: true,
+    html: true,
+  })
     .use(anchor, {
-        permalink: true,
-        renderPermalink: (slug, opts, state, idx) => {
-            const linkTokens = [
-                Object.assign(new state.Token('link_open', 'a', 1), {
-                    attrs: [
-                        ['class', opts.permalinkClass],
-                        ['href', opts.permalinkHref(slug, state)],
-                        ['aria-hidden', 'true'],
-                    ],
-                }),
-                Object.assign(new state.Token('html_block', '', 0), { content: opts.permalinkSymbol }),
-                new state.Token('link_close', 'a', -1),
-            ];
-            state.tokens[idx + 1].children.unshift(...linkTokens);
-        },
-        permalinkClass: 'content__anchor',
-        permalinkSymbol: '<i data-feather="bookmark"></i>',
-        permalinkBefore: true,
+      permalink: true,
+      renderPermalink: (slug, opts, state, idx) => {
+        const linkTokens = [
+          Object.assign(new state.Token("link_open", "a", 1), {
+            attrs: [
+              ["class", opts.permalinkClass],
+              ["href", opts.permalinkHref(slug, state)],
+              ["aria-hidden", "true"],
+            ],
+          }),
+          Object.assign(new state.Token("html_block", "", 0), {
+            content: opts.permalinkSymbol,
+          }),
+          new state.Token("link_close", "a", -1),
+        ];
+        state.tokens[idx + 1].children.unshift(...linkTokens);
+      },
+      permalinkClass: "content__anchor",
+      permalinkSymbol: '<i data-feather="bookmark"></i>',
+      permalinkBefore: true,
     })
-    .use(attrs),
+    .use(attrs)
 );
-CB.use(timer('CB: Markdown'));
+CB.use(timer("CB: Markdown"));
 
 // Headings
 CB.use(headings());
-CB.use(timer('CB: Headings'));
+CB.use(timer("CB: Headings"));
 
-CB.use(redirect({
-    '/support': 'https://support.d2iq.com',
-}));
-CB.use(timer('CB: Redirects'));
+CB.use(
+  redirect({
+    "/support": "https://support.d2iq.com",
+  })
+);
+CB.use(timer("CB: Redirects"));
 
 // Permalinks
 CB.use(permalinks());
-CB.use(timer('CB: Permalinks'));
+CB.use(timer("CB: Permalinks"));
 
 // Layouts
-CB.use(layouts({ engine: 'pug', cache: true }));
-CB.use(timer('CB: Layouts'));
+CB.use(layouts({ engine: "pug", cache: true }));
+CB.use(timer("CB: Layouts"));
 
 //
 // Slow Plugins End
@@ -300,18 +315,20 @@ CB.use(timer('CB: Layouts'));
 // The expected pattern format doesn't work with regex
 let pathPatternRegex;
 if (RENDER_PATH_PATTERN) {
-    pathPatternRegex = RENDER_PATH_PATTERN.split('/').slice(0, -1).join("\/");
+  pathPatternRegex = RENDER_PATH_PATTERN.split("/").slice(0, -1).join("/");
 }
 
 // Search Indexing
-if (ALGOLIA_UPDATE === 'true') {
-    CB.use(algolia({
-        projectId: ALGOLIA_PROJECT_ID,
-        privateKey: ALGOLIA_PRIVATE_KEY,
-        skipSections: ALGOLIA_SKIP_SECTIONS,
-        renderPathPattern: pathPatternRegex
-    }));
-    CB.use(timer('CB: Algolia'));
+if (ALGOLIA_UPDATE === "true") {
+  CB.use(
+    algolia({
+      projectId: ALGOLIA_PROJECT_ID,
+      privateKey: ALGOLIA_PRIVATE_KEY,
+      skipSections: ALGOLIA_SKIP_SECTIONS,
+      renderPathPattern: pathPatternRegex,
+    })
+  );
+  CB.use(timer("CB: Algolia"));
 }
 
 // Enable watching
@@ -322,31 +339,37 @@ if (ALGOLIA_UPDATE === 'true') {
 
 // Can only watch with a RENDER_PATH_PATTERN because there are too many
 // files without it.
-if (process.env.NODE_ENV === 'development' && RENDER_PATH_PATTERN) {
-    CB.use(watch({
-        paths: {
-            [`pages/${RENDER_PATH_PATTERN}/*`]: '**/*.{md,tmpl}',
-            'layouts/**/*': '**/*.pug',
-        },
-        livereload: true,
-    }));
-    CB.use(timer('CB: Watch'));
+if (process.env.NODE_ENV === "development" && RENDER_PATH_PATTERN) {
+  CB.use(
+    watch({
+      paths: {
+        [`pages/${RENDER_PATH_PATTERN}/*`]: "**/*.{md,tmpl}",
+        "layouts/**/*": "**/*.pug",
+      },
+      livereload: true,
+    })
+  );
+  CB.use(timer("CB: Watch"));
 }
 
 // WkhtmltopdfLinkResolver
-if (process.env.NODE_ENV === 'pdf') {
-    CB.use(wkhtmltopdfLinkResolver({
-        prefix: '/tmp/pdf/build',
-    }));
-    CB.use(timer('CB: WkhtmltopdfLinkResolver'));
+if (process.env.NODE_ENV === "pdf") {
+  CB.use(
+    wkhtmltopdfLinkResolver({
+      prefix: "/tmp/pdf/build",
+    })
+  );
+  CB.use(timer("CB: WkhtmltopdfLinkResolver"));
 }
 
 // Serve
-if (process.env.NODE_ENV === 'development') {
-    CB.use(serve({
-        port: 3000,
-    }));
-    CB.use(timer('CB: Webserver'));
+if (process.env.NODE_ENV === "development") {
+  CB.use(
+    serve({
+      port: 3000,
+    })
+  );
+  CB.use(timer("CB: Webserver"));
 }
 
 //
@@ -356,31 +379,35 @@ if (process.env.NODE_ENV === 'development') {
 const AB = branch();
 
 // Start timer
-AB.use(timer('AB: Init'));
+AB.use(timer("AB: Init"));
 
 // Watch
 // Can only watch with a RENDER_PATH_PATTERN because there are too many
 // files without it.
-if (process.env.NODE_ENV === 'development' && RENDER_PATH_PATTERN) {
-    AB.use(watch({
-        paths: {
-            'js/**/*': '**/*.js',
-            'scss/**/*': '**/*.scss',
-        },
-    }));
-    AB.use(timer('AB: Watch'));
+if (process.env.NODE_ENV === "development" && RENDER_PATH_PATTERN) {
+  AB.use(
+    watch({
+      paths: {
+        "js/**/*": "**/*.js",
+        "scss/**/*": "**/*.scss",
+      },
+    })
+  );
+  AB.use(timer("AB: Watch"));
 }
 
 // Assets
-AB.use(assets({
-    source: 'assets',
-    destination: 'assets',
-}));
-AB.use(timer('AB: Assets'));
+AB.use(
+  assets({
+    source: "assets",
+    destination: "assets",
+  })
+);
+AB.use(timer("AB: Assets"));
 
 // Webpack
-AB.use(webpack('./webpack.config.js'));
-AB.use(timer('AB: Webpack'));
+AB.use(webpack("./webpack.config.js"));
+AB.use(timer("AB: Webpack"));
 
 //
 // Metalsmith
@@ -391,5 +418,5 @@ MS.use(AB);
 
 // Build
 MS.build((err, files) => {
-    if (err) throw err;
+  if (err) throw err;
 });
